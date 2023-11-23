@@ -1,0 +1,134 @@
+---
+title: "Point 1"
+author: "Sebastian Méndez"
+date: "2023-11-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+library(reticulate)
+```
+
+```{r}
+library(extrafont)
+font_import
+warnings()
+```
+
+```{r}
+library(readr)
+
+Cars <- read_csv("CARS_1.csv")
+View(Cars)
+```
+
+## **EDA in R**
+
+En este dataset se contiene la información de todos los automoviles lanzados a la venta en el año 2022. Originalmente, este dataset contiene 203 filas, es decir, 203 vehículos y a su vez 16 columnas que brindarán específicaciones puntuales de cada uno de los carros. A continuación para una medida de datos más precisa y enfocada, procederemos a excluir todo aquel vehículo que cuente con menos de 10 reviews y dejar únicamente los vehículos que encajen con una carrocería SUV.
+
+```{r}
+Confiable <- subset(Cars, reviews_count >= 10)
+SUV <- subset(Confiable,body_type == "SUV" )
+View(SUV)
+```
+
+#### Torque máximo de SUV's (Densidad)
+
+Sin duda alguna, este es de los gráficos menos adecuados para realizar con este dataset, debido a que generalmente se realiza un ainterpretación de la densiadad de los datos con respecto al tiempo, variable con la que no se cuenta. Por lo cual se realizó uno de la densidad de los datos con respecto al máximo torque que desarrollan las SUV, mostrándonos así su forma de distribución.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+SUV %>%
+  
+  ggplot( aes(x=max_torque_nm)) +
+    geom_density(fill="#D23310", color="#e9ecef", alpha=0.8)
+```
+
+Como se puede observar, hay una mayor densidad entre los 200 y los 400 Nm, lo que indica que hay una mayor cantidad de carros que presentan un torque máximo en este intervalo. A continuación se verá expresado con valores más exactos.
+
+#### Torque máximo de SUV's (Histograma)
+
+Los histogramas son muy similares a los gráficos de densidad, sin embargo, el gráfico de densidad permite ver de mejor manera la forma de la distribución, mientras que el histograma permite ver valores más precisos numéricamente.
+
+```{r}
+library(tidyverse)
+library(hrbrthemes)
+SUV %>%
+  ggplot( aes(x=max_torque_nm)) +
+    geom_histogram( binwidth=50, fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+    ggtitle("Max torque (Nm)") 
+    theme(
+      plot.title = element_text(size=100)
+    )
+
+```
+
+Como se pudo ver en el anterior histograma, la mayoría de SUV's cuentan con un torque de 250 Nm, siendo 10 de los vehículos. Del mismo modo se pueden encontrar otros grupos grandes como 8 SUV con alrededor de 310 Nm y 8 SUV con alrededor de 385 Nm. Se puede evidenciar que pocas son las SUV que consiguen tener un torque superior a los 625 Nm e inferior a los 750 Nm. Teniendo en cuenta lo anterior, en relación con su torque, las SUV más escasas son aquellas con menos de 125 Nm de torque (1 unidad), con 645 Nm (1 unidad) y por último con 715 Nm (1 unidad).
+
+#### Relación entre tipo de transmisión, capacidad del tanque y tipo de combustible
+
+Se utilizó un diagrama de caja y bigotes para realizar un análisis entre la relación que hay entre el tipo de transmisión del vehículo bien sea manual, electrica o automática; su combustible, bien sea eléctrico, diesel o corriente; la capacidad total del tanque.
+
+```{r,  warning=FALSE}
+ggplot(SUV, aes(x=transmission_type, y=fuel_tank_capacity, fill=fuel_type)) + 
+    geom_boxplot()
+```
+
+Como podemos interpretar en este boxplot, unicamente son automáticos los vehículos que funcionan con gasolina corriente. Obteniendo unos valores aproximados de la media, las SUV diesel automáticas tienen una media de capacidad de alrededor de los 55 L, las diesel mecánicas de alrrededor de unos 60 L y para las automáticas que usan gasolina corriente alrededor de unos 50 L. Interpretando la media de cada uno de los casos, se llega a que las SUV que usan diesel suelen tener una mayor capacidad en su tanque con respecto a aquellas que funcionan con gasolina corriente. Pensando específicamente en las Diesel, se ve que las manuales tienen más capacidad que las automáticas, lo cual probablemente se deba a que los vehículos automáticos presentan cierta optimización de combustible. Como se puede observar, las transmisiones eléctricas son adimensionales en el eje de capacidad, debido a que el dataset la toma como 0, ya que se da en unidades de L y los vehículos eléctricos usan alimentación eléctrica dada en KW/H (Kilowatts por hora). También podemos observar que la SUV con más capacidad se encuentra entre las automáticas que funcionan con gasolina corriente, con alrededor de unos 87 L.
+
+#### Relación entre número de cilindros, las revoluciones de maxima potencia y el tipo de combustible
+
+Se utilizó un gráfico de dispersión para analizar la relación que hay entre el número de cilindros y las revoluciones a las que el vehículo entrega la máxima potencia, clasificandolor por colores según el tipo de combustible que usan.
+
+```{r, warning=FALSE}
+ggplot(SUV, aes(x=no_cylinder, y=max_power_rp, color=fuel_type)) + 
+    geom_point(size=6) +
+    theme_ipsum()
+```
+
+Como se puede observar a primera vista, las SUV's eléctricas no cuentan con datos debido a que no aplica el concepto de revoluciones por minuto y tampoco cuentan con cilindros, debido a que su estructura es diferente. Debido a lo anterior y, se generará el gráfico con la variable de maxima potencia expresada en caballos de fuerza, lo cual favorecerá los datos de las SUV eléctricas.
+
+```{r,  warning=FALSE}
+ggplot(SUV, aes(x=no_cylinder, y=max_power_bhp, color=fuel_type)) + 
+    geom_point(size=6) +
+    theme_ipsum()
+```
+
+Como se pude observar, ya hay en este apartado datos de SUV's eléctricas. Del mismo modo, se observa que las SUV que mas potencia en caballos de fuerza entregan, son aquellos que usan como combustible gasolina corriente o petróleo. Así se puede observar que la SUV que más potencia en caballos de fuerza desarrolla es de 600 bhp, con una configuración de 8 cilíndros y gasolina corriente.
+
+De esta gráfica también se puede decir que a mayor cantidad de cílindros, mayor cantidad de caballos de fuerza desarrolla una SUV, aunque con algunas excepciones. Podemos analizar que pese a usar una mecánica diferente, las SUV's electricas pueden generar más potencia de la que generan algunas que usan Diesel o Petróleo y que cuentan con 4 cilíndros.
+
+#### Calificación de SUV's manuales
+
+Primero que todo, se crea una variable para hacer un pequeño dataset derivado del que habíamos realizado previamente de únicamente SUV's, el cual únicamente va a tener las SUV's de transmisión manual o mecánica. Se hizo uso de un diagrama de barras para revisar la calificación que se da a cada una de estas.
+
+```{r}
+library(forcats)
+ManualSUV <- subset(SUV,transmission_type == "Manual")
+ManualSUV %>%
+  mutate(name = fct_reorder(car_name, desc(rating))) %>%
+  ggplot( aes(x=car_name, y=rating)) +
+    geom_bar(stat="identity", fill="#22BBD1", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_bw()
+```
+
+Como se puede observar, en general, las SUV mecánicas son vehículos confiables con una alta calificación dentro del dataset, teniendo 5 de ellas una calificación de 4.5 de entre las 6 SUV mecánicas lanzadas en el 2022.
+
+#### Relación entre torque y número de cilíndros de SUV's automáticas
+
+Inicialmente desarrollamos un dataset que solo contenga las SUV automáticas (que son la mayoría), derivado del que ya habíamos creado de únicamente SUV, excluyendo así los mecánicos y eléctricos. Se hizo uso de un diagrama de línea para hallar una relación entre el número de cilíndros de una SUV y su torque (dado en Nm), obteniendo los siguientes resultados.
+
+```{r}
+AutomaticSUV <- subset(SUV, transmission_type == "Automatic")
+AutomaticSUV %>%
+  tail(10) %>%
+  ggplot( aes(x=max_torque_nm, y=no_cylinder)) +
+    geom_line() +
+    geom_point() 
+```
+
+Sin excepción alguna, como se puede observar existe una relación directamente proporcional entre la cantidad de cilíndros y el torque de una SUV. Precisamente se puede observar que las SUV de 4 cílindros generan entre 200 y 400 Nm de torque, las de 6 cilíndros generan 600 Nm de torque, las de 8 cílindros entre 725 y 775 Nm de torque y por último, las de 12 cílindros llegan a generar hasta 900 Nm de torque.
